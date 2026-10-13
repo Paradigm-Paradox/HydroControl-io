@@ -208,7 +208,7 @@
     <script>
         async function doseManual(pump) {
             if (!confirm("Confirm priming/test dose of 2mL?")) return;
-            const res = await fetch("/api/manual-dose", {
+            const res = await fetch("api/manual-dose", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ pump: pump, volume_ml: 2.0 })
