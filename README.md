@@ -1,93 +1,136 @@
-# SolarControl-io
+# HydroControl-io 💧🌱
 
-[![GitHub Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/Paradigm-Paradox/SolarControl-io)
-[![Home Assistant Add-on](https://img.shields.io/badge/home--assistant-add--on-blue.svg?logo=home-assistant)](https://www.home-assistant.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Supported Architectures](https://img.shields.io/badge/arch-aarch64%20|%20amd64%20|%20armv7-green.svg)
+> **Autonomous, Intelligent Hydroponic Automation & Monitoring System for Home Assistant**
 
-> **Intelligent, edge-native solar energy management, battery storage optimization, dynamic excess diversion, and tariff arbitrage for Home Assistant.**
+<p align="center">
+  <img src="docs/assets/logo.png" alt="HydroControl-io ESP32 Water Storage Logo" width="340" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+</p>
+
+<p align="center">
+  <a href="https://www.home-assistant.io"><img src="https://img.shields.io/badge/Home%20Assistant-Add--on-blue.svg?logo=home-assistant" alt="Home Assistant Add-on"></a>
+  <a href="esphome/"><img src="https://img.shields.io/badge/Hardware-ESP32%20(Wi--Fi%20%7C%20Ethernet%20%7C%20BLE)-329171.svg?logo=espressif" alt="ESP32 Powered"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://github.com/Paradigm-Paradox/HydroControl-io/releases"><img src="https://img.shields.io/github/v/release/Paradigm-Paradox/HydroControl-io?include_prereleases" alt="Release"></a>
+</p>
 
 ---
 
-## ⚡ Overview
+## 📖 Overview
 
-**SolarControl-io** turns your Home Assistant instance into a smart, local energy management system (EMS). It coordinates your solar inverters, home battery storage (BESS), EV chargers, and household loads in real time to maximize self-consumption, protect against peak electric rates, and route excess solar into hot water and vehicle batteries.
+**HydroControl-io** turns your Home Assistant instance into a centralized, resilient hydroponic management station. Designed for Deep Water Culture (DWC), Nutrient Film Technique (NFT), Ebb & Flow (Flood & Drain), Aeroponics, and automated drip systems.
+
+Powered by versatile **ESP32** microcontrollers (utilizing low-cost, energy-efficient Wi-Fi, Ethernet, and Bluetooth connectivity), HydroControl-io bridges raw hardware probes and relays with advanced agronomic control loops (automated pH & nutrient dosing, pump scheduling, safety limits, leak detection, and climate synchronization).
+
+---
+
+## ⚡ ESP32 Hardware Integration
+
+HydroControl-io provides turnkey **ESPHome** firmware templates for multiple ESP32 configurations:
+
+| Architecture | Connectivity | Best For | Features |
+|---|---|---|---|
+| **ESP32 Wi-Fi Node** | 2.4 GHz 802.11 b/g/n + BLE | Indoor tents & standard reservoirs | Active Bluetooth proxy for plant BLE sensors, JSN-SR04T ultrasonic level, DS18B20 temp, ADS1115 isolated ADC for pH/EC probes |
+| **ESP32 Ethernet POE** | 10/100M LAN8720 / RMII PHY | Commercial racks & wet greenhouse rooms | Zero wireless dropouts, Power-over-Ethernet (PoE) single-cable deployment, low RF interference near ballast lights |
+
+Ready-to-flash templates are available in the [`esphome/`](esphome/) directory:
+- [`esphome/esp32_wifi_reservoir.yaml`](esphome/esp32_wifi_reservoir.yaml): Wi-Fi + BLE proxy sensor & pump controller
+- [`esphome/esp32_ethernet_reservoir.yaml`](esphome/esp32_ethernet_reservoir.yaml): Hardwired Ethernet POE node for mission-critical reservoirs
+
+---
+
+## ✨ Key Features
+
+- **Automated Dosing Engine:**
+  - Dynamic pH regulation (pH Up / pH Down) with pulse-pause intervals and hysteresis safeguards.
+  - Multi-part nutrient dosing (A/B/Micro/Grow/Bloom) based on target Electrical Conductivity (EC / PPM / TDS).
+  - Safety locks: maximum single dose caps, hourly limits, and lockout on sensor drift/failure.
+
+- **Reservoir & Irrigation Management:**
+  - Automated top-off (ATO) with dual float/ultrasonic sensor verification and flood timeouts.
+  - Flexible pump cycle modes (continuous, intermittent duty cycle, flood & drain timer, solar-synced).
+  - Water temperature regulation with chiller/heater dual-thermostat control.
+
+- **Sensor Calibration & Health Monitoring:**
+  - Ingress web UI with step-by-step 2-point and 3-point calibration wizards for pH and EC probes.
+  - Sensor health scoring and anomaly detection (sudden jumps, stale readings, dry probe detection).
+
+- **Seamless Home Assistant Integration:**
+  - Automatic discovery and bidirectional synchronization via Home Assistant WebSocket/REST API and MQTT.
+  - Exposes clean entities (sensors, switches, numbers, selects, and alert alarms) ready for Lovelace cards.
+  - Built-in Home Assistant Ingress UI for standalone monitoring, calibration, and live logs.
+
+---
+
+## 🏛 Architecture
 
 ```
-       [ ☀️ Solar PV ]
-              │
-              ▼
-    [ ⚡ Hybrid Inverter ] ◄──────► [ 🔋 Battery (BESS) ]
-        ▲            │
-        │            ▼
- [ 🌐 Grid ]   [ 🏠 Home Load ]
-                     │
-         ┌───────────┴───────────┐
-         ▼                       ▼
-  [ 🚗 EV Charger ]     [ ♨️ Water Heater / HVAC ]
+                  ┌──────────────────────────────────────────────┐
+                  │              ESP32 Edge Layer                │
+                  │  - ESP32 Wi-Fi / Ethernet POE (ESPHome)       │
+                  │  - Analog/I2C Probes: pH, EC, Temp (DS18B20) │
+                  │  - Ultrasonic / Float Level Sensors          │
+                  │  - Relays: Peristaltic Dosing & Flow Pumps   │
+                  │  - BLE Proxy: Flora / RuuviTag BLE Beacons   │
+                  └───────────────────────┬──────────────────────┘
+                                          │ (Home Assistant Native API / MQTT)
+                                          ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    HydroControl-io (HA Add-on)                          │
+│                                                                         │
+│  ┌─────────────────────────┐           ┌─────────────────────────────┐  │
+│  │   Control Loops Core    │           │     Safety Interlocks       │  │
+│  │  - pH Balancer (PID)    │           │  - Dry Run Detection        │  │
+│  │  - EC Nutrient Dosers   │◄─────────►│  - Daily Volume Hard Limits │  │
+│  │  - Irrigation Scheduler │           │  - Sensor Variance Locks    │  │
+│  │  - Auto-Top-Off (ATO)   │           │  - Emergency Halt (E-Stop)  │  │
+│  └────────────┬────────────┘           └──────────────┬──────────────┘  │
+│               │                                       │                 │
+│               ▼                                       ▼                 │
+│  ┌─────────────────────────┐           ┌─────────────────────────────┐  │
+│  │  FastAPI Backend Engine │           │     Ingress Dashboard UI    │  │
+│  │  - State Storage        │◄─────────►│  - Live Telemetry & Gauges  │  │
+│  │  - Event Dispatcher     │           │  - Probe Calibration Wizard │  │
+│  │  - Config Manager       │           │  - Manual Pump Overrides    │  │
+│  └─────────────────────────┘           └─────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## 🚀 Key Features
-
-- **⚡ Real-time Power Flow & Balance Engine**: Unifies PV generation, battery charge/discharge, grid import/export, and load telemetry with low-latency closed-loop control.
-- **🔋 Battery Energy Storage Optimization**:
-  - **Self-Consumption Maximization**: Zero out grid draw using stored solar energy.
-  - **Time-of-Use (TOU) Arbitrage**: Intelligent pre-charging on super off-peak tariffs and aggressive peak-shaving.
-  - **Storm & Outage Emergency Reserve**: Automatic battery reserve floor bumping on severe weather warnings.
-- **♨️ Excess Solar Diversion (Zero-Waste Energy)**:
-  - Dynamically routes surplus solar into water heaters, heat pump thermal storage, and EV chargers instead of exporting for pennies.
-  - Anti-hunting hysteresis and minimum cycle timers protect equipment against cloud flicker.
-- **📉 Dynamic Tariff & Negative Pricing Protection**:
-  - Direct integration with Nord Pool, Tibber, Amber Electric, and wholesale dynamic tariffs.
-  - Automatic curtailment or diversion trigger when feed-in rates turn negative.
-  - Utility export limit and zero-export enforcement.
-- **🖥️ Native Home Assistant Ingress UI**:
-  - Sleek, responsive web dashboard with live animated power flow diagrams.
-  - Mode switches (`Auto Optimizer`, `Self Consumption`, `TOU Arbitrage`, `Backup Reserve`, `Manual`).
-  - Diversion priority ordering and instant manual overrides.
-
----
-
-## 📦 Installation in Home Assistant
-
-1. In your Home Assistant instance, navigate to **Settings** -> **Add-ons** -> **Add-on Store**.
-2. Click the three dots (top right) -> **Repositories**.
-3. Add this repository URL:
-   ```text
-   https://github.com/Paradigm-Paradox/SolarControl-io
-   ```
-4. Find **SolarControl-io** in the add-on store list and click **Install**.
-5. Configure your inverter, battery, and meter entities in the **Configuration** tab.
-6. Click **Start** and select **Show in sidebar** to access the Ingress dashboard.
 
 ---
 
 ## 📁 Repository Structure
 
-```text
-├── solar_control/               # Complete Home Assistant Add-on
-│   ├── app/                     # Python FastAPI server & energy engine
-│   │   ├── engine/              # Power flow, battery manager, load diverter
-│   │   ├── config.py            # Options loader & pydantic models
-│   │   ├── ha_client.py         # Home Assistant Supervisor API client
-│   │   └── main.py              # Ingress web application
-│   ├── config.yaml              # Add-on configuration & options schema
-│   ├── build.yaml               # Multi-arch container base images
-│   ├── Dockerfile               # Production container definition
-│   ├── run.sh                   # Startup script
-│   ├── DOCS.md                  # Detailed user guide
-│   └── CHANGELOG.md             # Version history
-├── docs/
-│   └── DESIGN.md                # System design & architecture specification
-├── DESIGN.md                    # Architecture summary
-├── repository.yaml              # HA Add-on Repository manifest
-└── README.md
 ```
+├── repository.yaml                   # Home Assistant Add-on repository descriptor
+├── README.md                         # Project documentation and architecture guide
+├── DESIGN.md                         # System architecture & hardware specification
+├── LICENSE                           # MIT License
+├── esphome/                          # ESP32 Firmware configurations
+│   ├── esp32_wifi_reservoir.yaml     # ESP32 Wi-Fi + BLE sensor & pump controller
+│   └── esp32_ethernet_reservoir.yaml # ESP32 Ethernet / POE hardware controller
+└── hydrocontrol/                     # HydroControl-io Add-on Package
+    ├── config.yaml                   # Add-on configuration & options schema
+    ├── build.yaml                    # Multi-architecture build settings
+    ├── Dockerfile                    # Container image definition
+    ├── icon.png                      # ESP32 water storage add-on icon
+    ├── DOCS.md                       # Installation and wiring guide
+    ├── CHANGELOG.md                  # Release history
+    └── rootfs/app/                   # FastAPI backend, controllers & Ingress UI
+```
+
+---
+
+## 🚀 Quick Start (Installation)
+
+1. In Home Assistant, navigate to **Settings** -> **Add-ons** -> **Add-on Store**.
+2. Click the three dots in the top right corner and select **Repositories**.
+3. Add this repository URL:
+   ```text
+   https://github.com/Paradigm-Paradox/HydroControl-io
+   ```
+4. Search for **HydroControl-io**, click **Install**, configure your entity IDs in the configuration tab, and click **Start**.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
